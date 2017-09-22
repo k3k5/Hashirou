@@ -1,3 +1,5 @@
+package de.uni_regensburg.mi.hashirou;
+
 import android.app.Application;
 import android.content.Context;
 

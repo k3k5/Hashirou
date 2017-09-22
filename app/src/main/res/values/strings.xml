@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Hashirou</string>
+    <string name="facebook_app_id">1493010764115174</string>
+    <string name="startRun">Lass uns laufen!</string>
+    <string name="btn_stopRun">Genug gelaufen!</string>
+    <string name="btn_uploadToWeb">Im Webservice speichern!</string>
 </resources>

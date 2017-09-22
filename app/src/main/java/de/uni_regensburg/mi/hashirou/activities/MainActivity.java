@@ -35,12 +35,13 @@ import java.util.Map;
 import java.util.UUID;
 
 import de.uni_regensburg.mi.hashirou.R;
+import de.uni_regensburg.mi.hashirou.database.DatabaseAdapter;
 import de.uni_regensburg.mi.hashirou.database.DatabaseContract.FeedEntry;
-import de.uni_regensburg.mi.hashirou.database.DatabaseReader;
 
 public class MainActivity extends AppCompatActivity {
 
     boolean currentlyRunning = false;
+    DatabaseAdapter MyDatabaseAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +51,11 @@ public class MainActivity extends AppCompatActivity {
         final Button btn_startRun = (Button) findViewById(R.id.btn_startRun);
         final Button btn_stopRun = (Button) findViewById(R.id.btn_stopRun);
         final TextView currentSpeed = (TextView) findViewById(R.id.currentSpeed);
+
+        MyDatabaseAdapter = new DatabaseAdapter(this);
+
+        //opening connection to db is expensive => keep it open
+        MyDatabaseAdapter.open();
 
         btn_startRun.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -99,18 +105,7 @@ public class MainActivity extends AppCompatActivity {
     private void saveNewLocationToDatabase(Location location, TextView currentSpeed) {
         Log.d("Position", location.toString());
 
-        DatabaseReader databaseReader = new DatabaseReader(getApplicationContext());
-
-        SQLiteDatabase db = databaseReader.getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put(FeedEntry.COLUMN_NAME_TIMESTAMP, getCurrentTimeStamp());
-        values.put(FeedEntry.COLUMN_NAME_LOCATION_LAT, location.getLatitude());
-        values.put(FeedEntry.COLUMN_NAME_LOCATION_LNG, location.getLongitude());
-        values.put(FeedEntry.COLUMN_NAME_CURRENT_SPEED, location.getSpeed());
-        values.put(FeedEntry.COLUMN_NAME_CURRENT_HEIGHT, location.getAltitude());
-
-        db.insert(FeedEntry.TABLE_NAME, null, values);
+        MyDatabaseAdapter.insertLocation(getCurrentTimeStamp(), location);
     }
 
     public void sendVolleyRequest(Integer method, String url, final Map<String, String> params) {
@@ -149,10 +144,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void getAllDatabaseValues() {
 
-        DatabaseReader databaseReader = new DatabaseReader(getApplicationContext());
-        SQLiteDatabase db = databaseReader.getReadableDatabase();
+        Cursor cursor = MyDatabaseAdapter.getAllLocations();
 
-        String[] projection = {
+        /*String[] projection = {
                 FeedEntry._ID,
                 FeedEntry.COLUMN_NAME_TIMESTAMP,
                 FeedEntry.COLUMN_NAME_LOCATION_LAT,
@@ -170,6 +164,11 @@ public class MainActivity extends AppCompatActivity {
                 null,
                 null
         );
+        */
+
+        if(cursor.getCount()==0){
+            return;
+        }
 
         List<Double> altitudes = new ArrayList<>();
         List<Double> locations_lat = new ArrayList<>();
@@ -207,6 +206,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        MyDatabaseAdapter.close();
         super.onDestroy();
     }
 
